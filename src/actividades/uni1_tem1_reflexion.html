@@ -1,0 +1,160 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Sinapsis Lengua 4 — Reflexión</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      /* La selección calcula el ancho de cada opción por el largo de su
+         HTML: con imágenes adentro sale demasiado ancha y se desborda. */
+      #p1act button[data-indice-original] {
+        flex-basis: 7.5rem !important;
+        max-width: 10rem !important;
+      }
+    </style>
+  </head>
+  <body class="bg-stone-50">
+    <div class="book-page">
+      <div class="book-card">
+        <div class="book-card__body">
+          <div id="encabezado" class="mb-8"></div>
+
+          <!-- --- inicio --- -->
+
+          <!-- ================= REFLEXIÓN / POSLECTURA ================= -->
+          <img
+            src="/img/ico_reflexion.png"
+            alt="Reflexión"
+            class="h-8 w-auto" />
+          <div class="mt-3 flex items-center gap-2">
+            <strong class="text-xl font-black text-orange-500"
+              >Poslectura</strong
+            >
+            <img
+              src="/img/ico_memoria_de_trabajo.png"
+              alt="Memoria de trabajo"
+              class="h-11 w-auto" />
+          </div>
+
+          <!-- ---------- Lectura literal ---------- -->
+          <div class="mt-6 flex items-center gap-2">
+            <span
+              class="grid h-6 w-6 place-items-center rounded-full bg-green-600 text-sm font-black text-white"
+              >L</span
+            >
+            <strong class="text-lg font-black text-green-600"
+              >Lectura literal</strong
+            >
+          </div>
+
+          <!-- Pregunta 1 -->
+          <div class="py-4 sm:py-5 print:py-3 flow-root">
+            <div class="p1 punto2"></div>
+            <div class="text-slate-800 text-base leading-relaxed mt-5 sm:mt-5">
+              <span class="text-blue-600 font-bold text-lg mr-1.5">1.</span>
+              <b>Encierra</b> los personajes que aparecen en el cuento.
+            </div>
+            <div class="w-full mt-6">
+              <div id="p1act" class="w-full"></div>
+            </div>
+          </div>
+
+          <!-- Pregunta 2 -->
+          <div class="py-4 sm:py-5 print:py-3 flow-root">
+            <div class="p2 punto1"></div>
+            <div class="text-slate-800 text-base leading-relaxed mt-5 sm:mt-5">
+              <span class="text-blue-600 font-bold text-lg mr-1.5">2.</span>
+              <b>Subraya</b> las expresiones de susto y asombro del primer
+              ministro.
+            </div>
+            <div class="w-full mt-6">
+              <div id="p2act" class="w-full"></div>
+            </div>
+          </div>
+
+          <!-- Pregunta 3 -->
+          <div class="py-4 sm:py-5 print:py-3 flow-root">
+            <div class="p3 punto2"></div>
+            <div class="text-slate-800 text-base leading-relaxed mt-5 sm:mt-5">
+              <span class="text-blue-600 font-bold text-lg mr-1.5">3.</span>
+              <b>Relaciona</b> con una línea las imágenes y las características,
+              según la historia.
+            </div>
+            <div class="w-full mt-6">
+              <div id="p3act" class="w-full"></div>
+            </div>
+          </div>
+
+          <!-- ---------- Lectura inferencial ---------- -->
+          <div class="mt-4 flex items-center gap-2">
+            <span
+              class="grid h-6 w-6 place-items-center rounded-full bg-sky-600 text-sm font-black text-white"
+              >I</span
+            >
+            <strong class="text-lg font-black text-sky-600"
+              >Lectura inferencial</strong
+            >
+          </div>
+
+          <!-- Pregunta 4 -->
+          <div class="py-4 sm:py-5 print:py-3 flow-root">
+            <div class="p4 punto1 c-d"></div>
+            <div class="text-slate-800 text-base leading-relaxed mt-5 sm:mt-5">
+              <span class="text-blue-600 font-bold text-lg mr-1.5">4.</span>
+              <b>Contesta</b>. ¿De qué manera convencieron los bandidos al
+              emperador?
+            </div>
+            <div class="w-full mt-6">
+              <div id="p4act" class="mt-3 w-full">
+                <div class="bookText ln2"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pregunta 5 -->
+          <div class="py-4 sm:py-5 print:py-3 flow-root">
+            <div class="p5 punto2"></div>
+            <div class="text-slate-800 text-base leading-relaxed mt-5 sm:mt-5">
+              <span class="text-blue-600 font-bold text-lg mr-1.5">5.</span>
+              <b>Colorea</b> la respuesta correcta.
+            </div>
+            <div class="w-full mt-6">
+              <div id="p5act" class="w-full"></div>
+            </div>
+          </div>
+
+          <!-- ---------- Lectura crítico-valorativa ---------- -->
+          <div class="mt-4 flex items-center gap-2">
+            <span
+              class="grid h-6 w-6 place-items-center rounded-full bg-red-600 text-sm font-black text-white"
+              >C</span
+            >
+            <strong class="text-lg font-black text-red-600"
+              >Lectura crítico-valorativa</strong
+            >
+          </div>
+
+          <!-- Pregunta 6 -->
+          <div class="py-4 sm:py-5 print:py-3 flow-root">
+            <div class="p6 punto2 c-d"></div>
+            <div class="text-slate-800 text-base leading-relaxed mt-5 sm:mt-5">
+              <span class="text-blue-600 font-bold text-lg mr-1.5">6.</span>
+              ¿Cuál o cuáles de estas palabras consideras que están relacionadas
+              con el cuento? <b>Explica</b>.
+            </div>
+            <div class="w-full mt-6 print:mt-12!">
+              <div id="p6act" class="w-full"></div>
+              <div class="mt-3 bookText ln2"></div>
+            </div>
+          </div>
+
+          <!-- --- fin --- -->
+        </div>
+      </div>
+    </div>
+
+    <script
+      type="module"
+      src="/src/entries/uni1_tem1_reflexion.entry.ts"></script>
+  </body>
+</html>

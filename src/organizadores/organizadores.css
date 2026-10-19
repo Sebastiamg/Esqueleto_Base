@@ -1,0 +1,237 @@
+/* Layout y animaciones del motor de organizadores. */
+@reference "../styles/tailwind.css";
+
+/*
+  Presets de cada tipo de nodo. Van en @layer components, por debajo de
+  @layer utilities: cualquier clase de Tailwind que el autor pase en
+  "clase" (bg-*, border-*, rounded-*, px-*…) gana siempre, sin necesidad de
+  "!". Si estuvieran como utilidades sueltas, el ganador entre dos clases de
+  la misma propiedad dependería del orden interno del CSS generado.
+*/
+@layer components {
+  .org-tipo-raiz {
+    @apply flex items-center gap-3 rounded-full bg-amber-400 px-6 py-3 text-lg leading-tight font-black text-white shadow-md;
+  }
+  .org-tipo-rama {
+    @apply flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-center font-black shadow-sm;
+  }
+  .org-tipo-hoja {
+    @apply flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-300 bg-white px-4 py-2 text-center font-semibold text-slate-700;
+  }
+  .org-tipo-nota {
+    @apply rounded-lg px-4 py-3 text-sm leading-snug text-slate-700;
+  }
+  .org-tipo-tarjeta {
+    @apply overflow-hidden rounded-lg bg-white text-sm leading-snug text-slate-700 shadow-sm;
+  }
+  .org-tarjeta-titulo {
+    @apply bg-slate-700 px-3 py-1.5 text-center font-bold text-white;
+  }
+  .org-tarjeta-texto {
+    @apply px-3 py-2;
+  }
+}
+
+.org-host {
+  outline: none;
+}
+.org-host:focus-visible {
+  outline: 2px solid var(--color-brand-300);
+  outline-offset: 6px;
+  border-radius: 1rem;
+}
+
+.org-lienzo {
+  overflow-x: auto;
+  padding: 0.75rem 0 1rem;
+}
+
+.org-arbol {
+  --org-sep-x: 2.75rem;
+  --org-sep-y: 0.9rem;
+  --org-sangria: 1.75rem;
+  position: relative;
+  width: max-content;
+  margin-inline: auto;
+}
+
+.org-lineas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* ---------- Layout horizontal ---------- */
+.org-fila {
+  display: flex;
+  align-items: center;
+  gap: var(--org-sep-x);
+}
+.org-cabeza {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.9rem;
+}
+.org-nota {
+  padding-left: var(--org-sangria);
+}
+.org-nota--etiquetada {
+  padding-top: 1.1rem;
+}
+.org-hijos {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--org-sep-y);
+}
+
+/* ---------- Modo compacto: esquema vertical con sangría ---------- */
+.org-arbol.org-compacto {
+  width: 100%;
+}
+.org-compacto .org-fila {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+.org-compacto .org-fila,
+.org-compacto .org-cabeza,
+.org-compacto .org-hijos,
+.org-compacto .org-converge,
+.org-compacto .org-nota {
+  width: 100%;
+  min-width: 0;
+}
+.org-compacto .org-hijos {
+  gap: 0.65rem;
+}
+.org-compacto .org-hijos,
+.org-compacto .org-converge {
+  padding-left: var(--org-sangria);
+}
+.org-compacto .org-nodo {
+  max-width: 100%;
+}
+
+/* ---------- Nodos ---------- */
+.org-nodo {
+  position: relative;
+  z-index: 1;
+  opacity: 0;
+  transform: translateX(-6px) scale(0.97);
+  pointer-events: none;
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s ease;
+}
+.org-nodo.org-visible {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+  transition:
+    opacity 0.38s ease var(--org-retraso, 0ms),
+    transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) var(--org-retraso, 0ms);
+}
+
+/* Renglones (crearRenglones) dentro de un nodo: el nodo ya es la tarjeta,
+   así que se quita la tarjeta propia del widget y queda solo la línea. */
+.org-nodo .bookText {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  animation: none;
+}
+
+/* ---------- Conexiones ---------- */
+.org-trazo {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.org-mascara {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 12;
+  stroke-dasharray: var(--org-largo) var(--org-largo);
+  stroke-dashoffset: var(--org-largo);
+  transition: stroke-dashoffset 0.22s ease-in;
+}
+.org-conexion.org-visible .org-mascara {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 0.5s cubic-bezier(0.4, 0, 0.2, 1) var(--org-retraso, 0ms);
+}
+.org-marcador,
+.org-etiqueta {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.org-conexion.org-visible .org-marcador,
+.org-conexion.org-visible .org-etiqueta {
+  opacity: 1;
+  transition: opacity 0.3s ease calc(var(--org-retraso, 0ms) + 380ms);
+}
+
+/* ---------- Controles flotantes ---------- */
+/* El hueco conserva el alto de la barra cuando esta pasa a "fixed", para
+   que la página no salte. */
+.org-controles--flotante {
+  position: fixed;
+  left: 50%;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  z-index: 40;
+  transform: translateX(-50%);
+  padding: 0.5rem 0.75rem;
+  border-radius: 1.25rem;
+  background: rgb(255 255 255 / 0.92);
+  backdrop-filter: blur(8px);
+  box-shadow:
+    0 12px 32px -10px rgb(15 23 42 / 0.3),
+    0 0 0 1px rgb(15 23 42 / 0.06);
+  animation: org-flotar-entrada 0.25s ease-out;
+}
+@keyframes org-flotar-entrada {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+}
+
+/* Al redibujar (resize) no debe animarse nada. */
+.org-sin-transicion,
+.org-sin-transicion * {
+  transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .org-arbol,
+  .org-arbol * {
+    transition-duration: 1ms !important;
+    transition-delay: 0ms !important;
+  }
+}
+
+/* Impreso: siempre el mapa completo. */
+@media print {
+  /* Un mapa no se corta entre dos hojas (sus líneas quedarían partidas). */
+  .org-host {
+    break-inside: avoid;
+  }
+  .org-nodo {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .org-mascara {
+    stroke-dashoffset: 0 !important;
+  }
+  .org-marcador,
+  .org-etiqueta {
+    opacity: 1 !important;
+  }
+}

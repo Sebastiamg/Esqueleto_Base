@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <title>Esqueleto Base</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/src/styles/tailwind.css" />
+  </head>
+  <body class="min-h-screen bg-stone-50 text-slate-800">
+    <header class="border-b border-slate-200 bg-white">
+      <div class="mx-auto flex max-w-5xl flex-wrap items-end justify-between gap-3 px-5 pb-4 pt-6">
+        <div>
+          <h1 class="text-3xl font-black tracking-tight text-slate-800">Esqueleto Base</h1>
+          <p class="text-sm text-slate-500">Plantilla reutilizable — Tema 1 completo + cierre, como referencia</p>
+        </div>
+        <p id="resumen" class="text-sm font-semibold text-slate-500"></p>
+      </div>
+
+      <!-- Unidades -->
+      <nav aria-label="Unidades" class="mx-auto max-w-5xl px-5">
+        <div id="unidades" class="-mb-px flex gap-1 overflow-x-auto" role="tablist"></div>
+      </nav>
+    </header>
+
+    <main class="mx-auto max-w-5xl px-5 py-6">
+      <!-- Temas de la unidad elegida -->
+      <nav aria-label="Temas" class="mb-6">
+        <div id="temas" class="flex flex-wrap gap-2"></div>
+      </nav>
+
+      <!-- Tema elegido -->
+      <section aria-live="polite">
+        <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <div class="min-w-0">
+            <p id="tema-etiqueta" class="text-xs font-black uppercase tracking-wide text-slate-500"></p>
+            <h2 id="tema-titulo" class="text-2xl font-black leading-tight text-slate-800"></h2>
+          </div>
+          <div class="flex gap-2">
+            <button id="anterior" type="button" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-600 shadow-surface hover:bg-slate-50 disabled:opacity-40">← Anterior</button>
+            <button id="siguiente" type="button" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-600 shadow-surface hover:bg-slate-50 disabled:opacity-40">Siguiente →</button>
+          </div>
+        </div>
+        <div id="actividades" class="grid gap-4 sm:grid-cols-2"></div>
+      </section>
+    </main>
+
+    <script type="module">
+      // ---------------------------------------------------------------
+      // Catálogo: para agregar una unidad o un tema basta con sumarlo acá.
+      // Cada actividad apunta a src/actividades/<archivo>.html
+      // ---------------------------------------------------------------
+      const SECCIONES = {
+        experiencia: { nombre: 'Experiencia', icono: '/img/ico_con_experiencia.png', color: 'emerald' },
+        reflexion: { nombre: 'Reflexión', icono: '/img/ico_reflexion.png', color: 'rose' },
+        conceptualizacion: { nombre: 'Conceptualización', icono: '/img/ico_conceptualizacion.png', color: 'orange' },
+      };
+
+      const tema = (numero, titulo, prefijo, taller) => ({
+        numero,
+        titulo,
+        actividades: [
+          { seccion: 'experiencia', archivo: `${prefijo}_experiencia` },
+          { seccion: 'reflexion', archivo: `${prefijo}_reflexion` },
+          { seccion: 'conceptualizacion', archivo: `${prefijo}_conceptualizacion` },
+          ...(taller
+            ? [{ nombre: taller.nombre, icono: taller.icono, color: 'sky', archivo: `${prefijo}_taller` }]
+            : []),
+        ],
+      });
+
+      // Esqueleto base: solo el Tema 1 completo (las 4 secciones) + el
+      // Tema 6 de cierre (red sináptica) quedan como referencia de cómo se
+      // arma cada pieza. Para un libro nuevo, copiar ese patrón por cada
+      // unidad/tema real y sumarlo acá.
+      const UNIDADES = [
+        {
+          id: 'u1',
+          nombre: 'Unidad 1',
+          temas: [
+            tema(1, 'El cuento clásico', 'uni1_tem1', { nombre: 'Taller de escritura creativa', icono: '/img/ico_taller_escritura_creativa.png' }),
+            {
+              numero: 6,
+              etiqueta: 'Cierre',
+              titulo: 'Red sináptica de ideas',
+              actividades: [
+                { nombre: 'Red sináptica de ideas', icono: '/img/ico_red_sinaptica_de_ideas.png', color: 'violet', archivo: 'uni1_tem6_red_sinaptica' },
+              ],
+            },
+          ],
+        },
+        {
+          id: 'pruebas',
+          nombre: 'Documentos de prueba',
+          temas: [
+            {
+              numero: '·',
+              etiqueta: 'Pruebas',
+              titulo: 'Demos del motor de organizadores gráficos',
+              actividades: [
+                { nombre: 'Organizador gráfico paso a paso', color: 'slate', archivo: 'uniMapaExample' },
+                { nombre: 'Organizador con renglones para completar', color: 'slate', archivo: 'uniMapaCuentoPopular' },
+              ],
+            },
+          ],
+        },
+      ];
+
+      const COLORES = {
+        emerald: 'border-emerald-200 bg-emerald-50 text-emerald-900 hover:border-emerald-400',
+        rose: 'border-rose-200 bg-rose-50 text-rose-900 hover:border-rose-400',
+        orange: 'border-orange-200 bg-orange-50 text-orange-900 hover:border-orange-400',
+        sky: 'border-sky-200 bg-sky-50 text-sky-900 hover:border-sky-400',
+        violet: 'border-violet-200 bg-violet-50 text-violet-900 hover:border-violet-400',
+        slate: 'border-slate-200 bg-white text-slate-700 hover:border-slate-400',
+      };
+
+      // ---------------------------------------------------------------
+      const $ = id => document.getElementById(id);
+      const estado = { unidad: 0, tema: 0 };
+
+      const total = UNIDADES.filter(u => u.id !== 'pruebas').reduce(
+        (n, u) => n + u.temas.reduce((m, t) => m + t.actividades.length, 0),
+        0,
+      );
+      $('resumen').textContent = `${total} actividades`;
+
+      function leerHash() {
+        const m = location.hash.match(/^#(\w+)-t(\d+|·)$/);
+        if (!m) return;
+        const u = UNIDADES.findIndex(x => x.id === m[1]);
+        if (u < 0) return;
+        const t = UNIDADES[u].temas.findIndex(x => String(x.numero) === m[2]);
+        estado.unidad = u;
+        estado.tema = Math.max(t, 0);
+      }
+
+      function guardar() {
+        const u = UNIDADES[estado.unidad];
+        history.replaceState(null, '', `#${u.id}-t${u.temas[estado.tema].numero}`);
+        try { localStorage.setItem('indice', location.hash); } catch {}
+      }
+
+      function pintarUnidades() {
+        $('unidades').innerHTML = UNIDADES.map((u, i) => {
+          const activa = i === estado.unidad;
+          return `<button type="button" role="tab" aria-selected="${activa}" data-unidad="${i}"
+            class="whitespace-nowrap rounded-t-xl border border-b-0 px-5 py-2.5 text-sm font-black transition ${
+              activa
+                ? 'border-slate-200 bg-stone-50 text-sky-700'
+                : 'border-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+            }">${u.nombre}</button>`;
+        }).join('');
+      }
+
+      function pintarTemas() {
+        const u = UNIDADES[estado.unidad];
+        $('temas').innerHTML = u.temas.map((t, i) => {
+          const activo = i === estado.tema;
+          return `<button type="button" data-tema="${i}" title="${t.titulo}"
+            class="flex max-w-xs items-center gap-2 rounded-full border py-1.5 pl-1.5 pr-4 text-left text-sm font-bold transition ${
+              activo
+                ? 'border-sky-600 bg-sky-600 text-white shadow-control'
+                : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:text-sky-700'
+            }">
+            <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-black ${
+              activo ? 'bg-white text-sky-700' : 'bg-slate-100 text-slate-500'
+            }">${t.numero}</span>
+            <span class="truncate">${t.titulo}</span>
+          </button>`;
+        }).join('');
+      }
+
+      function pintarTema() {
+        const u = UNIDADES[estado.unidad];
+        const t = u.temas[estado.tema];
+        $('tema-etiqueta').textContent = `${u.nombre} · ${t.etiqueta ?? `Tema ${t.numero}`}`;
+        $('tema-titulo').textContent = t.titulo;
+        $('anterior').disabled = estado.tema === 0;
+        $('siguiente').disabled = estado.tema === u.temas.length - 1;
+        $('actividades').innerHTML = t.actividades.map(a => {
+          const base = a.seccion ? SECCIONES[a.seccion] : a;
+          return `<a href="/src/actividades/${a.archivo}.html"
+            class="group flex items-center gap-4 rounded-2xl border-2 p-4 shadow-surface transition hover:-translate-y-0.5 hover:shadow-card ${COLORES[base.color]}">
+            ${base.icono ? `<img src="${base.icono}" alt="" class="h-10 max-w-[10rem] shrink-0 object-contain" />` : ''}
+            <span class="min-w-0 flex-1">
+              <span class="block font-black leading-tight">${base.nombre}</span>
+              <span class="block truncate text-xs font-medium opacity-70">${a.archivo}</span>
+            </span>
+            <span aria-hidden="true" class="text-xl font-black opacity-40 transition group-hover:translate-x-1 group-hover:opacity-100">→</span>
+          </a>`;
+        }).join('');
+      }
+
+      function pintar() {
+        pintarUnidades();
+        pintarTemas();
+        pintarTema();
+        guardar();
+      }
+
+      $('unidades').addEventListener('click', e => {
+        const b = e.target.closest('[data-unidad]');
+        if (!b) return;
+        estado.unidad = Number(b.dataset.unidad);
+        estado.tema = 0;
+        pintar();
+      });
+      $('temas').addEventListener('click', e => {
+        const b = e.target.closest('[data-tema]');
+        if (!b) return;
+        estado.tema = Number(b.dataset.tema);
+        pintar();
+      });
+      $('anterior').addEventListener('click', () => { estado.tema = Math.max(0, estado.tema - 1); pintar(); });
+      $('siguiente').addEventListener('click', () => {
+        estado.tema = Math.min(UNIDADES[estado.unidad].temas.length - 1, estado.tema + 1);
+        pintar();
+      });
+      document.addEventListener('keydown', e => {
+        if (e.key === 'ArrowLeft') $('anterior').click();
+        if (e.key === 'ArrowRight') $('siguiente').click();
+      });
+      window.addEventListener('hashchange', () => { leerHash(); pintarUnidades(); pintarTemas(); pintarTema(); });
+
+      // Recuerda dónde te quedaste la última vez.
+      if (!location.hash) {
+        try { history.replaceState(null, '', localStorage.getItem('indice') || location.pathname); } catch {}
+      }
+      leerHash();
+      pintar();
+    </script>
+  </body>
+</html>

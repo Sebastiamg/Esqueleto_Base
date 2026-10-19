@@ -1,0 +1,54 @@
+/* Estilo del revelador de página (ver revelador.ts): fade + slide al
+   aparecer cada bloque, igual sensación que organizadores.css pero a nivel
+   de sección completa, no de nodo. */
+.reveal-paso {
+  opacity: 0;
+  transform: translateY(14px);
+  pointer-events: none;
+  transition:
+    opacity 0.4s ease,
+    transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.reveal-paso.reveal-visible {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-paso {
+    transition-duration: 1ms;
+  }
+}
+
+/* Bloque pendiente de revelar: colapsado (sin alto ni márgenes) pero NO con
+   display:none, para que conserve su ancho de layout y los widgets que miden
+   su tamaño al montarse (crearRelacionar…) funcionen aunque aún no se vea.
+   Va en una capa propia (posterior a las utilidades de Tailwind): al imprimir,
+   "all: revert-layer" devuelve el bloque a lo que dicen sus propias clases. */
+@layer reveal {
+  .reveal-oculto {
+    max-height: 0;
+    overflow: hidden;
+    visibility: hidden;
+    margin-block: 0;
+    padding-block: 0;
+    border-block-width: 0;
+  }
+}
+
+/* Impreso: siempre la actividad completa, sin la barra de navegación. */
+@media print {
+  @layer reveal {
+    .reveal-oculto {
+      all: revert-layer;
+    }
+  }
+  .reveal-paso {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .reveal-barra {
+    display: none !important;
+  }
+}

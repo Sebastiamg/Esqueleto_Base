@@ -1,0 +1,92 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Sinapsis Lengua 4 — El cuento clásico</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      /* La selección calcula el ancho de cada opción por el largo de su
+         HTML: con la imagen del emoji adentro sale ~260px fijos y se
+         desborda en celular. Tarjetas compactas: 4 en fila en PC, 2 en
+         celular. */
+      #p2act button[data-indice-original] {
+        flex-basis: 7.5rem !important;
+        max-width: 10rem !important;
+      }
+    </style>
+  </head>
+  <body class="bg-stone-50">
+    <div class="book-page">
+      <div class="book-card">
+        <div class="book-card__body">
+          <div id="encabezado" class="mb-8"></div>
+
+          <!-- --- inicio --- -->
+
+          <!-- ================= EXPERIENCIA ================= -->
+          <div id="paso1">
+            <img
+              src="/img/ico_con_experiencia.png"
+              alt="Experiencia"
+              class="mb-2 h-9 w-auto" />
+
+            <!-- Pregunta 1 -->
+            <div class="py-4 sm:py-5 print:py-3 flow-root">
+              <!-- Enunciado -->
+              <div class="text-slate-800 text-base leading-relaxed mt-2">
+                <span class="text-blue-600 font-bold text-lg mr-1.5">1.</span>
+                <b>Lee</b> el siguiente cuento clásico:
+              </div>
+              <strong class="mt-3 block text-center text-lg font-black text-sky-700">
+                El traje nuevo del emperador
+              </strong>
+              <div id="p1act" class="mt-4 flex w-full flex-col items-center gap-4"></div>
+
+              <!-- Glosario -->
+              <aside
+                id="glosario"
+                class="mt-6 max-w-sm overflow-hidden rounded-xl border border-violet-200 bg-white shadow-sm">
+                <div class="bg-violet-700 px-4 py-2 font-black tracking-wide text-white">
+                  Glosario
+                </div>
+                <dl class="space-y-1.5 px-4 py-3 text-slate-700">
+                  <div>
+                    <dt class="inline font-bold text-violet-700">comitiva.</dt>
+                    <dd class="inline">Acompañantes.</dd>
+                  </div>
+                  <div>
+                    <dt class="inline font-bold text-violet-700">altivo.</dt>
+                    <dd class="inline">Orgulloso, soberbio.</dd>
+                  </div>
+                </dl>
+              </aside>
+            </div>
+          </div>
+
+          <!-- ================= MI EMOCIÓN CUENTA ================= -->
+          <div id="paso2">
+            <img
+              src="/img/ico_mi_emocion_cuenta.png"
+              alt="Mi emoción cuenta"
+              class="mt-6 h-8 w-auto" />
+
+            <!-- Pregunta 2 -->
+            <div class="py-4 sm:py-5 print:py-3 flow-root">
+              <!-- Enunciado -->
+              <div class="text-slate-800 text-base leading-relaxed mt-2">
+                <span class="text-blue-600 font-bold text-lg mr-1.5">2.</span>
+                <b>Encierra</b>. ¿Qué emociones has experimentado cuando
+                recibiste críticas de los demás?
+              </div>
+              <div id="p2act" class="mt-4 w-full"></div>
+            </div>
+          </div>
+
+          <!-- --- fin --- -->
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/entries/uni1_tem1_experiencia.entry.ts"></script>
+  </body>
+</html>

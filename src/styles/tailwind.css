@@ -1,0 +1,522 @@
+@import 'tailwindcss';
+
+/* Dónde buscar clases usadas (HTML de actividades + JS/TS que las generan). */
+@source '../actividades';
+@source '../entries';
+@source '../app';
+@source '../contenido';
+
+/*
+  Tema personalizado (colores brand/success/danger/acento, sombras y
+  animaciones) — debe coincidir con el que usa vendor/funciones/funciones.css
+  (los widgets de crearVerdaderoFalso, crearCoevaluacion, etc. generan
+  clases como "bg-brand-500"/"text-danger-600" esperando estos tokens).
+*/
+@theme {
+  --color-brand-50: var(--color-sky-50);
+  --color-brand-100: var(--color-sky-100);
+  --color-brand-200: var(--color-sky-200);
+  --color-brand-300: var(--color-sky-300);
+  --color-brand-400: var(--color-sky-400);
+  --color-brand-500: var(--color-sky-500);
+  --color-brand-600: var(--color-sky-600);
+  --color-brand-700: var(--color-sky-700);
+
+  --color-success-50: var(--color-emerald-50);
+  --color-success-100: var(--color-emerald-100);
+  --color-success-200: var(--color-emerald-200);
+  --color-success-300: var(--color-emerald-300);
+  --color-success-400: var(--color-emerald-400);
+  --color-success-500: var(--color-emerald-500);
+  --color-success-600: var(--color-emerald-600);
+  --color-success-700: var(--color-emerald-700);
+
+  --color-danger-50: var(--color-rose-50);
+  --color-danger-100: var(--color-rose-100);
+  --color-danger-200: var(--color-rose-200);
+  --color-danger-300: var(--color-rose-300);
+  --color-danger-400: var(--color-rose-400);
+  --color-danger-500: var(--color-rose-500);
+  --color-danger-600: var(--color-rose-600);
+  --color-danger-700: var(--color-rose-700);
+
+  --color-acento-1: var(--color-violet-500);
+  --color-acento-2: var(--color-purple-500);
+  --color-acento-3: var(--color-fuchsia-500);
+  --color-acento-4: var(--color-amber-500);
+  --color-acento-5: var(--color-indigo-500);
+  --color-acento-6: var(--color-cyan-600);
+
+  --shadow-surface: 0 1px 3px 0 rgb(15 23 42 / 0.04);
+  --shadow-panel:
+    0 2px 6px -2px rgb(15 23 42 / 0.06), 0 1px 2px -1px rgb(15 23 42 / 0.04);
+  --shadow-card:
+    0 4px 10px -4px rgb(15 23 42 / 0.1), 0 2px 4px -2px rgb(15 23 42 / 0.06);
+  --shadow-card-hover:
+    0 8px 16px -6px rgb(15 23 42 / 0.14), 0 3px 6px -2px rgb(15 23 42 / 0.08);
+  --shadow-control:
+    0 2px 4px -1px rgb(15 23 42 / 0.1), 0 1px 2px -1px rgb(15 23 42 / 0.06);
+  --shadow-control-press: 0 1px 1px 0 rgb(15 23 42 / 0.08) inset;
+}
+
+/* Todo botón se siente clicable, sin tener que acordarse de poner "cursor-pointer" en cada uno. */
+@layer base {
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+  button:disabled,
+  [role='button'][aria-disabled='true'] {
+    cursor: not-allowed;
+  }
+}
+
+/*
+  Los <textarea> de respuesta abierta traían una altura fija en px puesta
+  por JS (funciones.js la recalcula en cada "input" para que crezca en
+  pantalla) — pero medir esa altura con JS (scrollHeight) en "beforeprint"
+  no sirve: el navegador mantiene un árbol de layout de PANTALLA para que
+  el script lo consulte, y calcula el layout de IMPRESIÓN aparte, sin que
+  JS pueda leerlo antes de imprimir. Por eso el ajuste con JS (altura vía
+  scrollHeight) se veía bien en pantalla pero seguía cortando texto en el
+  PDF/papel real: el ancho de la hoja reacomoda las líneas distinto y la
+  altura ya calculada en pantalla no alcanza.
+  "field-sizing: content" resuelve esto de raíz: es el propio motor de
+  layout del navegador el que dimensiona la caja según su contenido, en
+  pantalla Y en impresión por igual (no una medición de JS que solo ve la
+  pantalla). OJO: field-sizing solo entra en juego cuando "height" computa
+  a "auto" — si se deja el "height: Npx" que pone funciones.js por
+  JavaScript, ese valor explícito sigue ganando y field-sizing no hace
+  nada. Por eso se fuerza además "height: auto !important" (un !important
+  de hoja de estilos le gana a un inline style normal, que es lo que pone
+  ese script) para que el content-sizing realmente tome el control.
+*/
+@layer base {
+  textarea {
+    height: auto !important;
+    field-sizing: content;
+  }
+
+  /*
+    Con field-sizing un campo vacío mide 1 línea, así que el mínimo de
+    renglones de crearRenglones (data-lineas-minimas, 32px por renglón) se
+    perdía: un "ln4" se veía de 1 línea. min-height lo restituye sin quitarle
+    a field-sizing el crecimiento con el contenido.
+  */
+  textarea[data-lineas-minimas='2'] { min-height: 64px; }
+  textarea[data-lineas-minimas='3'] { min-height: 96px; }
+  textarea[data-lineas-minimas='4'] { min-height: 128px; }
+  textarea[data-lineas-minimas='5'] { min-height: 160px; }
+  textarea[data-lineas-minimas='6'] { min-height: 192px; }
+  textarea[data-lineas-minimas='7'] { min-height: 224px; }
+  textarea[data-lineas-minimas='8'] { min-height: 256px; }
+}
+
+/*
+  La página no debe poder seleccionarse como si fuera un documento de texto
+  (títulos, párrafos, badges...) — solo los campos donde el estudiante
+  realmente escribe (input/textarea/contenteditable) siguen siendo
+  seleccionables, para no romper la edición normal de texto ahí dentro.
+*/
+@layer base {
+  html {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  input,
+  textarea,
+  [contenteditable='true'] {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+}
+
+/*
+  El badge de "punto/c-d" (etiquetas.ts) usa "float: right" a propósito
+  (para que el ENUNCIADO justo después lo rodee como un párrafo normal), y
+  un float afecta el ancho de CUALQUIER hermano normal que venga después en
+  el mismo contexto de bloque — no solo el enunciado que sí queremos que lo
+  rodee, sino también el widget que sigue más abajo, que terminaba con sus
+  primeras filas más angostas que las últimas (donde el float ya "termina")
+  en vez de parejo al 100%. Todo contenedor de widget en este proyecto tiene
+  un id "p{N}act" por convención (ver crearRenglones/crearRelacionar/etc.):
+  forzarle "clear: both" hace que arranque SIEMPRE debajo de cualquier
+  float ambiente, a ancho completo, sin tocar el enunciado (que no tiene
+  ese id y sigue rodeando al badge como corresponde).
+*/
+@layer base {
+  [id$='act'] {
+    clear: both;
+  }
+}
+
+@keyframes entrada {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@layer utilities {
+  .animate-entrada {
+    animation: entrada 260ms ease-out backwards;
+  }
+  .animate-pop {
+    animation: pop 320ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  }
+}
+
+/*
+  Shell visual de cada actividad: la franja centrada de la página
+  (.book-page) y la tarjeta blanca redondeada que la contiene (.book-card).
+  Nombres propios (no ".container"/".panel") para no chocar con la clase
+  utilitaria "container" de Tailwind ni con CSS heredado de otro proyecto.
+*/
+@layer components {
+  .book-page {
+    width: 100%;
+    max-width: 1280px;
+    margin-inline: auto;
+    padding-inline: 16px;
+    /* Más aire arriba en pantallas chicas: el botón ☰ es "fixed" (flota
+       sobre el contenido) y en móvil el encabezado empieza muy cerca del
+       borde superior — sin este espacio, el botón queda encima del
+       recorte de "Unidad N" o del título. */
+    padding-block: 4.5rem 1.5rem;
+    position: relative;
+  }
+  @media (min-width: 640px) {
+    .book-page {
+      padding-block: 1.5rem;
+    }
+  }
+  .book-card {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: var(--shadow-card-hover);
+    overflow: hidden;
+  }
+  .book-card__body {
+    padding: 28px 28px 36px;
+  }
+  @media (max-width: 640px) {
+    .book-card__body {
+      padding: 18px 16px 28px;
+    }
+  }
+
+  /* Encabezado de sección reutilizable ("Sumérgete en el mundo", "Identificar"...): círculo + etiqueta de color. */
+  .section-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-radius: 9999px;
+    padding: 0.65rem 1.5rem 0.65rem 1rem;
+    font-weight: 800;
+    color: #fff;
+    box-shadow: var(--shadow-control);
+    width: fit-content;
+  }
+
+  /* Tarjeta de borde suave para bloques informativos ("Recursos", texto de contexto, etc.). */
+  .info-card {
+    border-radius: 1.75rem;
+    border-width: 2px;
+    padding: 1.5rem;
+    background: #fff;
+  }
+
+  /* Encabezado de fase STEAMission: número en círculo + etiqueta, unidos como una sola píldora. */
+  .phase-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: fit-content;
+  }
+  .phase-tag__numero {
+    display: grid;
+    place-items: center;
+    height: 2rem;
+    width: 2rem;
+    border-radius: 9999px;
+    background: var(--phase-color, var(--color-brand-600));
+    color: #fff;
+    font-weight: 800;
+  }
+  .phase-tag__etiqueta {
+    font-weight: 800;
+    color: var(--phase-color, var(--color-brand-600));
+  }
+}
+
+/*
+  Fix de impresión #1: crearCompletarTabla arma sus columnas con flex + un
+  "min-width" fijo en px por columna (para que el texto más largo no la
+  aplaste en pantalla). Al imprimir, el ancho de página casi nunca alcanza
+  para sostener ese mínimo sin que el navegador tenga margen de reacomodarlo
+  — se ve como columnas cercenadas a la mitad. Estas dos reglas solo aplican
+  al imprimir: sueltan ese ancho mínimo y permiten que el contenido se vea
+  completo (envolviendo texto) en vez de cortarse.
+*/
+@media print {
+  [style*='min-width'] {
+    min-width: 0 !important;
+  }
+  .overflow-x-auto {
+    overflow: visible !important;
+  }
+}
+
+/*
+  Fix de impresión #2: al imprimir se ve todo más angosto que en pantalla
+  porque los insets se suman: el margen que pone el propio navegador MÁS el
+  padding de .container/.panel-body que ya existe para verse bien en
+  pantalla. Se reduce el margen de página y se quita ese padding SOLO al
+  imprimir (el padding del contenido de cada actividad, más chico, se deja
+  tal cual para que el texto no llegue pegado al borde de la hoja).
+*/
+@page {
+  margin: 9mm;
+}
+@media print {
+  .book-page,
+  .book-card__body {
+    padding: 0 !important;
+  }
+}
+
+/*
+  Fix de impresión #3: por defecto, los navegadores no imprimen fondos ni
+  colores tal cual se ven en pantalla (los aclaran/quitan para ahorrar
+  tinta), a menos que el usuario active manualmente "Gráficos de fondo" en
+  el diálogo de impresión — y muchos no lo hacen. print-color-adjust:exact
+  fuerza a respetar el color exacto sin depender de esa casilla.
+*/
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+/*
+  Fix de impresión #4: la clase utilitaria "print:hidden" (menú flotante,
+  tarjetas de Ayudas/Info, diálogo de guardar) compite en especificidad con
+  otras utilidades sin variante que también fijan "display" en el mismo
+  elemento (ej. "grid" en el botón ☰). Como el orden de generación de
+  Tailwind no garantiza que "print:hidden" quede después, en la práctica el
+  botón podía seguir viéndose al imprimir. Esta regla, con !important y
+  apuntando directo a los ids/clases de la UI flotante, gana siempre.
+*/
+@media print {
+  #menu-abrir,
+  #menu-panel,
+  #panel-ayudas,
+  #panel-info,
+  .print\:hidden {
+    display: none !important;
+  }
+}
+
+/*
+  Fix de impresión #5: cuando el contenido de .book-card no cabe en una
+  sola hoja, el navegador lo corta en la página siguiente — pero como
+  .book-card tiene "overflow: hidden" + esquinas redondeadas, ese recorte
+  se aplica también al fragmento que sigue en la nueva hoja, "mordiendo"
+  las primeras líneas de texto justo debajo del borde superior (parece
+  texto pegado o cortado en el margen). Al imprimir, .book-card pierde el
+  overflow/las esquinas/la sombra (no aportan nada en papel de todas
+  formas) para que el contenido fluya completo entre páginas.
+*/
+@media print {
+  .book-card {
+    overflow: visible !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+}
+
+/*
+  Fix de impresión #6: print-color-adjust:exact (fix #3) hace que TODO
+  fondo se imprima tal cual se ve en pantalla — incluido el gris muy claro
+  del <body> (bg-stone-50), que normalmente el navegador no imprime. El
+  resultado es una mancha gris en las zonas de la hoja donde no hay
+  contenido (ej. el resto de la última página). Se fuerza el fondo del
+  body a blanco solo al imprimir; los colores que sí importan (píldoras,
+  franjas, degradados) están en elementos propios y no se ven afectados.
+*/
+@media print {
+  body {
+    background: #fff !important;
+  }
+}
+
+/*
+  Fix de impresión #7: .folleto-encabezado (header.ts) usa márgenes
+  negativos para "sangrar" hasta el borde de .book-card, compensando el
+  padding de 28px de .book-card__body en pantalla. Al imprimir, el fix #2
+  deja ese padding en 0 — la compensación ya no tiene nada que cancelar y
+  el encabezado termina empujado más allá del margen real de la hoja
+  (texto pegado o cortado, como el número de página). Al imprimir, el
+  encabezado no necesita sangrar: ocupa el ancho normal (sin márgenes
+  negativos ni esquinas redondeadas), alineado al margen de @page igual
+  que el resto del contenido; conserva solo un padding chico y fijo (no
+  ligado al padding de .book-card__body) para que las píldoras no queden
+  pegadas al borde de la franja de color.
+*/
+@media print {
+  .folleto-encabezado {
+    margin: 0 !important;
+    border-radius: 0 !important;
+    padding-inline: 5mm !important;
+  }
+}
+
+/*
+  Fix de impresión #8: menos hojas al imprimir, SOLO al imprimir.
+  Tailwind calcula todo el padding/margin/gap del proyecto a partir de una
+  única variable ("--spacing", ver :root del tema) y todo el interlineado a
+  partir de otras pocas variables ("--leading-*"). Redefinir esas variables
+  dentro de @media print reduce de forma proporcional TODO el espaciado y
+  el interlineado de cualquier página (no solo las que existen hoy), sin
+  tocar ni una clase en el HTML y sin afectar en nada la vista en pantalla.
+  El espaciado del diseño en pantalla es generoso a propósito (para que se
+  lea cómodo); en papel esa misma cantidad de aire es la que más páginas
+  desperdicia, mucho más que el tamaño de letra.
+*/
+@media print {
+  :root,
+  :host {
+    --spacing: 0.2rem; /* 0.25rem en pantalla -> ~20% menos de espaciado en todo */
+    --leading-tight: 1.25;
+    --leading-snug: 1.25;
+    --leading-normal: 1.35;
+    --leading-relaxed: 1.45;
+    --leading-loose: 1.6;
+  }
+}
+
+/*
+  Fix de impresión #9: evita las "huérfanas" que desperdician casi una hoja
+  entera — un elemento chico (una fila de tabla, un ítem de lista, un
+  párrafo corto) que el navegador corta justo por la mitad al saltar de
+  página dejando una sola línea arriba de la hoja siguiente. Se aplica
+  break-inside:avoid SOLO a elementos chicos y de una sola pieza (nunca a
+  contenedores grandes como secciones completas: forzar eso empujaría todo
+  el bloque a la próxima hoja y desperdiciaría más espacio del que ahorra).
+*/
+@media print {
+  li,
+  tr,
+  h1,
+  h2,
+  h3,
+  h4,
+  img,
+  textarea {
+    break-inside: avoid;
+  }
+}
+
+/*
+  Fix de impresión #10: tamaño de letra, el último ajuste (después de
+  espaciado, márgenes e interlineado, que rinden más). Todos los tamaños de
+  Tailwind (text-sm, text-base, text-lg...) están en "rem", es decir,
+  relativos al font-size del <html>. Achicar ese font-size SOLO al imprimir
+  reduce toda la tipografía del proyecto de forma proporcional (los títulos
+  siguen siendo más grandes que el texto normal, no se pierde jerarquía) sin
+  tocar clases individuales. 87.5% equivale a pasar de ~16px a ~14px de
+  base — sigue siendo un tamaño de lectura normal en papel (los libros
+  impresos suelen rondar 10-12pt de cuerpo de texto); si hace falta más
+  ahorro de hojas, se puede bajar hasta ~80% antes de que empiece a
+  sentirse chico.
+*/
+@media print {
+  html {
+    /* font-size: 87.5%; */
+    font-size: 86%;
+  }
+}
+
+/*
+  Fix de impresión #11: las imágenes que acompañan un bloque de texto en
+  columnas (grid "lg:grid-cols-[1fr_Npx]" + imagen "w-full lg:sticky", ej.
+  "Paso a paso"/"Implementar") se ven bien en pantallas grandes, pero una
+  hoja impresa (A4 ≈ 794px de ancho) nunca alcanza el breakpoint "lg"
+  (1024px): el grid colapsa a una sola columna y la imagen "w-full" pasa a
+  ocupar el ancho completo de la hoja, creciendo muchísimo. "float" NO sirve
+  acá porque un hijo de grid ignora float por especificación — hay que
+  forzar directamente las columnas del grid. Se detecta ese contenedor por
+  la clase "lg:grid-cols-" (con una imagen "lg:sticky" adentro, que solo se
+  usa en este patrón) y se le fijan dos columnas también al imprimir, para
+  que la imagen conserve su rol de columna angosta en vez de ocupar la hoja.
+*/
+@media print {
+  div[class*='lg:grid-cols-']:has(img[class*='lg:sticky']) {
+    grid-template-columns: 1fr 45mm !important;
+  }
+  img[class*='lg:sticky'] {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/*
+  Tras "Guardar" (tras calificar), la actividad se congela: nada del
+  contenido debe poder seguir tocándose (botones, selects, inputs, texto
+  seleccionable), PERO el menú hamburguesa (botón ☰, su panel y las
+  tarjetas de Ayudas/Info) debe seguir funcionando con normalidad — de ahí
+  el bloqueo "todo, salvo estos 4 ids y sus descendientes" en vez de
+  desactivar el body entero. `menu.ts` agrega la clase "actividad-bloqueada"
+  al <body> justo al confirmar el diálogo de guardado.
+*/
+body.actividad-bloqueada {
+  pointer-events: none !important;
+  user-select: none !important;
+}
+body.actividad-bloqueada #menu-abrir,
+body.actividad-bloqueada #menu-panel,
+body.actividad-bloqueada #panel-ayudas,
+body.actividad-bloqueada #panel-info {
+  pointer-events: auto !important;
+  user-select: auto !important;
+}
+
+/*
+  Fix de impresión #12: "crearRutinasPensamiento" (Pienso/Me interesa/
+  Investigo) reparte sus tarjetas con un ancho que solo llega a "3 en fila"
+  en el breakpoint "lg:" de Tailwind (1024px) — por debajo de eso usa 2 en
+  fila ("sm:") y la 3ª cae a una fila aparte. print.ts SIEMPRE monta la
+  actividad a imprimir en un ancho fijo de 816px (ver ANCHO_IMPRESION_PX) —
+  816 < 1024, así que "lg:" nunca llega a activarse al imprimir, aunque en
+  pantalla (una ventana normal, >1024px) se vea perfecto. Resultado: la
+  tarjeta "Investigo" se cae a una hoja aparte, más hojas de las
+  necesarias. Se fuerza el ancho de 3 columnas en impresión directamente
+  (iguala el valor que ya trae esa clase para "lg:", ver el bundle vendor):
+  cualquier widget nuevo que use un breakpoint ">=1024px" para decidir
+  cuántas columnas mostrar va a tener este MISMO problema al imprimir —
+  ver GUIA_GENERAL.md, sección de impresión, para el criterio a seguir al
+  pedir una función nueva.
+*/
+@media print {
+  [class*='lg:w-[calc((100%-3rem)/3)]'] {
+    width: calc((100% - 3rem) / 3) !important;
+  }
+}
