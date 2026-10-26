@@ -90,6 +90,30 @@
   gap: var(--org-sep-y);
 }
 
+/* ---------- Layout vertical: árbol de arriba hacia abajo ---------- */
+/* Misma estructura del DOM que el horizontal (fila = cabeza + hijos), solo
+   cambia la dirección: la cabeza arriba y los hijos en fila debajo. */
+.org-vertical:not(.org-compacto) .org-fila {
+  flex-direction: column;
+  align-items: center;
+  gap: var(--org-sep-v, 2.25rem);
+}
+.org-vertical:not(.org-compacto) .org-cabeza {
+  align-items: center;
+}
+.org-vertical:not(.org-compacto) .org-nota {
+  padding-left: 0;
+}
+.org-vertical:not(.org-compacto) .org-hijos {
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--org-sep-h, 1.25rem);
+}
+.org-vertical .org-nodo {
+  transform: translateY(-6px) scale(0.97);
+}
+
 /* ---------- Modo compacto: esquema vertical con sangría ---------- */
 .org-arbol.org-compacto {
   width: 100%;
@@ -219,9 +243,23 @@
 
 /* Impreso: siempre el mapa completo. */
 @media print {
-  /* Un mapa no se corta entre dos hojas (sus líneas quedarían partidas). */
-  .org-host {
+  /* Un mapa no se corta entre dos hojas (sus líneas quedarían partidas);
+     si es más alto que una hoja, al menos ningún nodo queda partido. */
+  .org-host,
+  .org-nodo {
     break-inside: avoid;
+  }
+  /* En papel no hay scroll: el mapa ya se acomodó al ancho de la hoja
+     (vertical, esquema o scale(), ver ajustarOrganizadoresParaImprimir). */
+  .org-lienzo {
+    overflow-x: clip;
+  }
+  /* El espaciado compacto de impresión (--spacing 0.2rem en tailwind.css)
+     también achica los anchos fijos de los nodos (w-36 = 36 × spacing) pero
+     no la letra: las palabras largas no cabrían. Dentro del mapa se vuelve
+     al espaciado normal (la letra ya se achica con el 86 % del html). */
+  .org-arbol {
+    --spacing: 0.25rem;
   }
   .org-nodo {
     opacity: 1 !important;
@@ -229,6 +267,12 @@
   }
   .org-mascara {
     stroke-dashoffset: 0 !important;
+  }
+  /* La máscara solo sirve para animar el "dibujo" de la línea. Al imprimir
+     el navegador la rasteriza (20000 × 20000 px por línea): con muchas
+     líneas la vista previa tardaba más de 10 s. En papel la línea va entera. */
+  .org-trazo {
+    mask: none !important;
   }
   .org-marcador,
   .org-etiqueta {

@@ -91,7 +91,53 @@ function clonarParaImprimir(): string {
   recalculo.textContent = `
     function recalcularRelacionar() {
       var MARGEN_TARJETA_PX = 26;
+      // Las pasadas 1 y 2 corren con el layout de PANTALLA del iframe (letra
+      // al 100 %, espaciado normal): las tarjetas quedaban con un alto fijo
+      // para esa letra y en papel (letra al 86 %) salían "gordas", ocupando
+      // media hoja. Mientras se mide se aplica una copia de las reglas de
+      // impresión de tailwind.css (fix #2, #8 y #10, y el ancho útil de
+      // la hoja; igual que hace
+      // ajustarOrganizadoresParaImprimir), así los tamaños ya son los de la
+      // hoja aunque "beforeprint" no llegue a tiempo.
+      var estilo = document.createElement('style');
+      estilo.textContent =
+        'html{font-size:86% !important}' +
+        ':root,:host{--spacing:0.2rem;--leading-tight:1.25;--leading-snug:1.25;--leading-normal:1.35;--leading-relaxed:1.45;--leading-loose:1.6}' +
+        '.book-page,.book-card__body{padding:0 !important}' +
+        // Ancho útil de la hoja: 816 px menos los márgenes de @page (9 mm = 34 px por lado).
+        'body{width:748px !important;margin:0 !important}';
+      var yaEsImpresion = window.matchMedia && window.matchMedia('print').matches;
+      if (!yaEsImpresion) document.head.appendChild(estilo);
+      try {
       document.querySelectorAll('[data-widget-relacionar]').forEach(function (envoltorio) {
+        // En pantalla las dos columnas van 50/50. En la hoja (más angosta)
+        // eso deja media tarjeta vacía cuando un lado es corto ("Participante 1")
+        // y aprieta al otro: su texto envuelve en más líneas y todas las
+        // filas crecen. Si un lado no llena su columna, esa columna toma solo
+        // lo que necesita y el otro lado gana el ancho. Las cuerdas no se
+        // desacomodan: se recalculan más abajo con las posiciones reales.
+        var fila = envoltorio.querySelector('.grid');
+        if (fila && fila.children.length >= 2) {
+          fila.style.gridTemplateColumns = '';
+          envoltorio.querySelectorAll('button[data-lado]').forEach(function (b) { b.style.minWidth = ''; });
+          var libre = ['izquierda', 'derecha'].map(function (lado, i) {
+            var ancho = 0;
+            envoltorio.querySelectorAll('button[data-lado="' + lado + '"]').forEach(function (b) {
+              ancho = Math.max(ancho, b.getBoundingClientRect().width);
+            });
+            return fila.children[i].clientWidth - ancho;
+          });
+          fila.children[0].style.alignItems = '';
+          fila.children[1].style.alignItems = '';
+          // El lado que gana el ancho estira sus tarjetas a toda la columna (parejas).
+          if (libre[0] > 24 && libre[0] >= libre[1]) {
+            fila.style.gridTemplateColumns = 'max-content minmax(0, 1fr)';
+            fila.children[1].style.alignItems = 'stretch';
+          } else if (libre[1] > 24) {
+            fila.style.gridTemplateColumns = 'minmax(0, 1fr) max-content';
+            fila.children[0].style.alignItems = 'stretch';
+          }
+        }
         // Igual que al montar (ver "sincronizarAnchoTarjetas" y
         // "sincronizarAlturaTarjetas" en la fuente de "relacionar"):
         // primero el ANCHO de cada columna (a la tarjeta más ancha de ESE
@@ -158,6 +204,9 @@ function clonarParaImprimir(): string {
           });
         });
       });
+      } finally {
+        estilo.remove();
+      }
     }
     // Tres pasadas:
     //  1) inmediata: cubre el caso normal.

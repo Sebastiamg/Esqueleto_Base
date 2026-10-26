@@ -55,6 +55,14 @@ export interface NodoMapa {
 export interface DatosOrganizador {
   raiz: NodoMapa;
   /**
+   * 'horizontal' (por defecto): la raíz a la izquierda y los hijos en columna
+   * a su derecha. 'vertical': árbol de arriba hacia abajo, la raíz arriba y
+   * los hijos en fila debajo (ej. "Claves para identificar el tipo de texto").
+   * Con compacto 'auto', un mapa horizontal que no cabe prueba primero el
+   * vertical y recién después el esquema compacto (en pantalla y al imprimir).
+   */
+  orientacion?: 'horizontal' | 'vertical';
+  /**
    * 'auto' (por defecto): horizontal si cabe; si no, esquema vertical.
    * 'siempre' / 'nunca' fuerzan el modo compacto.
    */

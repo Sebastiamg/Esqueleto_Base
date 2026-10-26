@@ -677,6 +677,87 @@ interface EjercicioMatematicaInstancia {
 }
 declare function crearEjercicioMatematica(id: IdentificadorActividad, datos: EjercicioMatematicaDatos, puntaje?: number): EjercicioMatematicaInstancia;
 
+// --- escalaNivel ---
+/**
+ * ============================================================================
+ *  Escala de nivel ("Pinta el nivel")
+ * ============================================================================
+ *
+ * ¿Qué hace?
+ * Muestra una o varias escalas en forma de batería (tapa de color con "+"
+ * arriba, segmentos apilados y "−" abajo), cada una con su etiqueta debajo
+ * — como el "Pinta el nivel" de "Mi emoción cuenta" del libro impreso. El
+ * estudiante toca un segmento y la batería se rellena con su color desde
+ * abajo hasta ese segmento (el relleno "sube" segmento por segmento). Tocar
+ * otra vez el segmento más alto ya pintado lo baja un nivel, para poder
+ * corregir o dejar la escala vacía.
+ *
+ * Es una respuesta personal (cuánto siente/sabe/le gusta algo), así que NO
+ * se califica: revisar()/obtenerResultado() siempre devuelven un resultado
+ * neutro ({ correctas: 0, total: 0, porcentaje: 0, nota: 0 }), igual que
+ * Lienzo, Panel informativo, Renglones, Cuento y Rutinas del pensamiento, y
+ * el tercer parámetro (puntaje) se ignora. revisar() sí bloquea la escala
+ * (como el resto del catálogo al calificar) y reiniciar() la desbloquea.
+ *
+ * IMPORTANTE: la función NUNCA crea el contenedor — debe existir ya en tu
+ * HTML. La función solo lo busca (con document.getElementById).
+ *
+ * Cómo se manda a llamar (en el HTML/JS de un libro):
+ *
+ *   <p>Pinta el nivel. ¿Qué emociones experimentas cuando te felicitan?</p>
+ *   <div id="p1act"></div>
+ *
+ *   <script>
+ *     const instancia = crearEscalaNivel(1, {
+ *       items: [
+ *         { etiqueta: 'Anhelo', color: '#16A34A' },
+ *         { etiqueta: 'Indecisión', color: '#F97316' },
+ *         { etiqueta: 'Inseguridad' },
+ *       ],
+ *       niveles: 4,
+ *     });
+ *
+ *     instancia.obtenerNiveles(); // ej. [3, 1, 0] — nivel pintado de cada ítem
+ *   </script>
+ *
+ * El primer parámetro (id) funciona igual que en el resto de funciones —
+ * ver utilidades/contenedor.ts.
+ *
+ * `crearEscalaNivel` devuelve una instancia con:
+ *   - revisar(): bloquea la escala y devuelve el resultado neutro.
+ *   - obtenerResultado(): el resultado neutro, sin bloquear nada.
+ *   - reiniciar(): vacía todas las escalas y las desbloquea.
+ *   - obtenerNiveles(): el nivel pintado de cada ítem (0 = vacío), en el
+ *     mismo orden que "items".
+ * ============================================================================
+ */
+interface EscalaNivelItem {
+    /** Texto debajo de la escala. Admite HTML. */
+    etiqueta: string;
+    /** Color de la tapa y del relleno (cualquier color CSS). Por defecto, uno de la paleta del catálogo. */
+    color?: string;
+}
+interface EscalaNivelDatos {
+    items: EscalaNivelItem[];
+    /** Cantidad de segmentos de cada escala. Por defecto 4. */
+    niveles?: number;
+}
+interface EscalaNivelResultado {
+    correctas: number;
+    total: number;
+    porcentaje: number;
+    /** Siempre 0: la escala es una respuesta personal y no se califica. */
+    nota: number;
+}
+interface EscalaNivelInstancia {
+    revisar(): EscalaNivelResultado;
+    obtenerResultado(): EscalaNivelResultado;
+    reiniciar(): void;
+    /** Nivel pintado de cada ítem (0 = vacío), en el orden de "items". */
+    obtenerNiveles(): number[];
+}
+declare function crearEscalaNivel(id: IdentificadorActividad, datos: EscalaNivelDatos, _puntaje?: number): EscalaNivelInstancia;
+
 // --- etiquetarImagen ---
 /**
  * ============================================================================
@@ -1430,6 +1511,73 @@ interface RelacionarLiteralInstancia {
     reiniciar(): void;
 }
 declare function crearRelacionarLiteral(id: IdentificadorActividad, datos: RelacionarLiteralDatos, puntaje?: number): RelacionarLiteralInstancia;
+
+// --- relacionarTresColumnas ---
+/**
+ * ============================================================================
+ *  Relacionar en tres columnas — unir con líneas
+ * ============================================================================
+ *
+ * ¿Qué hace?
+ * Tres columnas de tarjetas: la del CENTRO es la que se relaciona con las dos
+ * de los lados (ej. Lengua 9, U1 T3: "Tema principal" ← texto → "Intención del
+ * autor"). El estudiante toca una tarjeta de un lado y luego una del centro
+ * (o al revés) y se traza la línea; tocar la misma pareja otra vez, o tocar la
+ * línea, la borra. Cada tarjeta de un lado admite una sola línea, y cada
+ * tarjeta del centro una sola por lado (conectar otra reemplaza la anterior),
+ * así el estudiante se corrige solo.
+ *
+ * IMPORTANTE: la función NUNCA crea el contenedor — debe existir ya en tu
+ * HTML (#p{id}act; opcional #pre{id}a para la nota). Devuelve
+ * { revisar, obtenerResultado, reiniciar }; el resultado trae nota.
+ *
+ * Calificación — Sistema B del catálogo (igual que Relacionar), sumando los
+ * dos lados: totalCorrectas = cantidad de tarjetas de los lados (cada una
+ * tiene su tarjeta del centro correcta); totalOpciones = combinaciones
+ * posibles de cada lado con el centro. Cada línea correcta suma
+ * 1/totalCorrectas; cada línea incorrecta resta 1/totalOpciones; nunca baja de
+ * 0. Al calificar se pinta en verde/rojo solo lo que el estudiante trazó.
+ *
+ * Impresión: las tarjetas van en una grilla de filas de igual alto y columnas
+ * con ancho fijo en porcentaje, y las líneas se dibujan en un SVG en
+ * porcentajes ("preserveAspectRatio=none" + "vector-effect:
+ * non-scaling-stroke") — por eso siguen en su lugar a cualquier ancho (también
+ * a los 816px del iframe de impresión) sin recalcular nada con JS.
+ *
+ * ============================================================================
+ */
+interface RelacionarTresColumnasLado {
+    /** Texto de la tarjeta (admite HTML). */
+    texto: string;
+    /** Índice (desde 0) de la tarjeta del centro con la que se relaciona. */
+    centro: number;
+}
+interface RelacionarTresColumnasDatos {
+    /** Tarjetas del centro (admiten HTML). */
+    centro: string[];
+    izquierda: RelacionarTresColumnasLado[];
+    derecha: RelacionarTresColumnasLado[];
+    /** Rótulos sobre cada columna (admiten HTML). */
+    titulos?: {
+        izquierda?: string;
+        centro?: string;
+        derecha?: string;
+    };
+    /** Baraja las tarjetas de los lados (el centro nunca se baraja). Por defecto true. */
+    aleatorio?: boolean;
+}
+interface RelacionarTresColumnasResultado {
+    correctas: number;
+    total: number;
+    porcentaje: number;
+    nota: number;
+}
+interface RelacionarTresColumnasInstancia {
+    revisar(): RelacionarTresColumnasResultado;
+    obtenerResultado(): RelacionarTresColumnasResultado;
+    reiniciar(): void;
+}
+declare function crearRelacionarTresColumnas(id: IdentificadorActividad, datos: RelacionarTresColumnasDatos, puntaje?: number): RelacionarTresColumnasInstancia;
 
 // --- rellenarEspacios ---
 /**

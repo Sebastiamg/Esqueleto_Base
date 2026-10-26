@@ -30,6 +30,8 @@ export function crearOrganizador(id: IdentificadorActividad, datos: DatosOrganiz
   lienzo.className = 'org-lienzo';
   const arbol = document.createElement('div');
   arbol.className = 'org-arbol org-sin-transicion';
+  const orientacion = datos.orientacion ?? 'horizontal';
+  arbol.classList.toggle('org-vertical', orientacion === 'vertical');
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('class', 'org-lineas');
   svg.setAttribute('aria-hidden', 'true');
@@ -65,17 +67,33 @@ export function crearOrganizador(id: IdentificadorActividad, datos: DatosOrganiz
     datos.alCambiarPaso?.(paso, total);
   }
 
-  // Modo compacto: se compara el ancho natural del mapa horizontal contra el
-  // espacio disponible. Ese ancho solo se mide mientras está en horizontal.
-  let anchoNatural = 0;
+  // Modo según el espacio: se mide el ancho natural del mapa en su
+  // orientación; si un horizontal no cabe se prueba el vertical, y si
+  // tampoco cabe, esquema compacto. Medir es sincrónico (cambiar clase y leer
+  // offsetWidth), así que no se ve ningún salto.
+  //
+  // El espacio nunca se toma mayor que el de una hoja impresa: así el mapa
+  // ya se ve en pantalla como va a salir en papel (un horizontal que no
+  // cabría en la hoja arranca vertical) y al imprimir no hay que rearmarlo.
+  // 814 = los 700 px de anchoHoja (trazado.ts) / 0,86 de la letra impresa.
+  const ANCHO_HOJA_EN_PANTALLA = 814;
   function evaluarModo(): void {
     const modo = datos.compacto ?? 'auto';
-    if (modo !== 'auto') {
-      arbol.classList.toggle('org-compacto', modo === 'siempre');
+    arbol.classList.remove('org-compacto');
+    arbol.classList.toggle('org-vertical', orientacion === 'vertical');
+    if (modo === 'siempre') {
+      arbol.classList.add('org-compacto');
       return;
     }
-    if (!arbol.classList.contains('org-compacto')) anchoNatural = arbol.offsetWidth;
-    arbol.classList.toggle('org-compacto', anchoNatural > lienzo.clientWidth);
+    if (modo === 'nunca') return;
+    const disponible = Math.min(lienzo.clientWidth, ANCHO_HOJA_EN_PANTALLA);
+    if (arbol.offsetWidth <= disponible) return;
+    if (orientacion === 'horizontal') {
+      arbol.classList.add('org-vertical');
+      if (arbol.offsetWidth <= disponible) return;
+      arbol.classList.remove('org-vertical');
+    }
+    arbol.classList.add('org-compacto');
   }
 
   let cuadro = 0;
@@ -113,8 +131,6 @@ export function crearOrganizador(id: IdentificadorActividad, datos: DatosOrganiz
     imprimiendo = false;
     arbol.style.transform = '';
     arbol.style.marginBottom = '';
-    anchoNatural = 0;
-    arbol.classList.remove('org-compacto');
     redibujar();
   };
   window.addEventListener('beforeprint', antesDeImprimir);

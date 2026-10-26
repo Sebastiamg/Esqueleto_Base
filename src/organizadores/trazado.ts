@@ -10,6 +10,7 @@
 export function trazarConexiones(arbol: HTMLElement): void {
   const RADIO = 3.5;
   const compacto = arbol.classList.contains('org-compacto');
+  const vertical = !compacto && arbol.classList.contains('org-vertical');
 
   // Posición sin transformaciones (las animaciones escalan los nodos).
   const caja = (el: HTMLElement) => {
@@ -48,6 +49,44 @@ export function trazarConexiones(arbol: HTMLElement): void {
     let fx: number;
     let fy: number;
     let recto = false;
+
+    if (vertical) {
+      // Árbol de arriba hacia abajo: baja del centro del origen hasta la
+      // mitad del hueco, cruza en horizontal y baja al centro del destino.
+      ix = a.x + a.w / 2;
+      iy = a.y + a.h + gi;
+      fx = b.x + b.w / 2;
+      fy = b.y - gf;
+      recto = true;
+      const my = (a.y + a.h + b.y) / 2;
+      const dx = fx - ix;
+      if (Math.abs(dx) < 1) {
+        fx = ix;
+        d = `M${ix},${iy} V${fy}`;
+      } else {
+        const r = Math.min(10, Math.abs(dx) / 2, my - iy, fy - my);
+        const s = dx > 0 ? 1 : -1;
+        d = `M${ix},${iy} V${my - r} Q${ix},${my} ${ix + s * r},${my} H${fx - s * r} Q${fx},${my} ${fx},${my + r} V${fy}`;
+      }
+      trazo.setAttribute('d', d);
+      mascara.setAttribute('d', d);
+      mascara.style.setProperty('--org-largo', `${trazo.getTotalLength() + 1}px`);
+      if (marcadorIni) {
+        marcadorIni.setAttribute('cx', String(ix));
+        marcadorIni.setAttribute('cy', String(iy - gi));
+      }
+      if (marcadorFin) {
+        marcadorFin.setAttribute('cx', String(fx));
+        marcadorFin.setAttribute('cy', String(fy + gf));
+      }
+      if (etiqueta) {
+        // Al costado del último tramo, el que baja al destino.
+        etiqueta.setAttribute('x', String(fx + 7));
+        etiqueta.setAttribute('y', String(Math.abs(dx) < 1 ? (iy + fy) / 2 : (my + fy) / 2));
+        etiqueta.setAttribute('text-anchor', 'start');
+      }
+      return;
+    }
 
     if (ruta === 'h') {
       ix = a.x + a.w + gi;
@@ -116,11 +155,13 @@ export function trazarConexiones(arbol: HTMLElement): void {
  * Las posiciones se miden relativas al propio mapa, así que no dependen del
  * ancho de la hoja: solo importa que la tipografía y el espaciado coincidan.
  *
- * Si el mapa horizontal no cabe en `anchoHoja` (ancho útil de una hoja A4/
- * Carta con márgenes de 9 mm), se reduce con scale() (en papel no hay
- * interacción, reducir es correcto); si quedaría ilegible (menos de 60 %),
- * pasa a modo esquema. `trazar` es trazarConexiones (se pasa como parámetro
- * para que esta función siga siendo autocontenida).
+ * Si el mapa no cabe en `anchoHoja` (ancho útil de una hoja A4/Carta con
+ * márgenes de 9 mm): un mapa horizontal prueba primero el layout vertical
+ * (árbol de arriba hacia abajo); con el que quede más ancho de los dos se
+ * reduce con scale() hasta 85 % (en papel no hay interacción, reducir un
+ * poco es correcto); si ni así cabe, pasa a modo esquema (nunca se corta ni
+ * aparece una barra de scroll). `trazar` es trazarConexiones (se pasa como
+ * parámetro para que esta función siga siendo autocontenida).
  */
 export function ajustarOrganizadoresParaImprimir(
   doc: Document,
@@ -132,7 +173,8 @@ export function ajustarOrganizadoresParaImprimir(
     "html{font-size:86% !important}" +
     ":root,:host{--spacing:0.2rem;--leading-tight:1.25;--leading-snug:1.25;--leading-normal:1.35;--leading-relaxed:1.45;--leading-loose:1.6}" +
     ".book-page,.book-card__body{padding:0 !important}" +
-    "[style*='min-width']{min-width:0 !important}";
+    "[style*='min-width']:not([data-lado]){min-width:0 !important}" +
+    ".org-arbol{--spacing:0.25rem}";
   doc.head.append(estilo);
   // El revelador de página oculta los bloques pendientes (.reveal-oculto) y
   // solo al imprimir los vuelve a mostrar: se destapan mientras se mide, o
@@ -143,10 +185,20 @@ export function ajustarOrganizadoresParaImprimir(
     doc.querySelectorAll<HTMLElement>('.org-arbol').forEach(arbol => {
       arbol.style.transform = '';
       arbol.style.marginBottom = '';
+      // Se parte de la orientación que ya eligió la pantalla (con el mismo
+      // criterio de ancho de hoja): casi siempre ya cabe y no se rearma nada.
+      // Solo se suelta el esquema compacto (ej. si se imprime desde el celular).
       arbol.classList.remove('org-compacto', 'org-sin-transicion');
 
-      const escala = Math.min(1, anchoHoja / arbol.offsetWidth);
-      if (escala < 0.6) {
+      let escala = Math.min(1, anchoHoja / arbol.offsetWidth);
+      if (escala < 1 && !arbol.classList.contains('org-vertical')) {
+        arbol.classList.add('org-vertical');
+        const escalaVertical = Math.min(1, anchoHoja / arbol.offsetWidth);
+        if (escalaVertical > escala) escala = escalaVertical;
+        else arbol.classList.remove('org-vertical');
+      }
+      if (escala < 0.85) {
+        arbol.classList.remove('org-vertical');
         arbol.classList.add('org-compacto');
         trazar(arbol);
         return;

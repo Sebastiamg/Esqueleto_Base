@@ -5,6 +5,7 @@
 @source '../entries';
 @source '../app';
 @source '../contenido';
+@source '../funciones';
 
 /*
   Tema personalizado (colores brand/success/danger/acento, sombras y
@@ -264,6 +265,38 @@
     font-weight: 800;
     color: var(--phase-color, var(--color-brand-600));
   }
+
+  /* Glosario en línea (ver src/app/glosario.ts): la palabra del texto va
+     resaltada y su significado aparece en una burbuja al pasar el mouse,
+     tocarla o enfocarla con el teclado. */
+  .glosa {
+    color: var(--color-violet-700);
+    font-weight: 700;
+    background: var(--color-violet-50);
+    border-bottom: 2px dotted var(--color-violet-400);
+    border-radius: 4px;
+    padding-inline: 2px;
+    cursor: help;
+    outline: none;
+  }
+  .glosa:hover,
+  .glosa:focus-visible {
+    background: var(--color-violet-100);
+  }
+}
+
+/* Al imprimir no hay mouse: el significado va entre paréntesis después de la palabra. */
+@media print {
+  .glosa {
+    background: none;
+    border-bottom: 0;
+  }
+  .glosa::after {
+    content: ' (' attr(data-significado) ')';
+    color: var(--color-slate-600);
+    font-weight: 400;
+    font-style: italic;
+  }
 }
 
 /*
@@ -276,7 +309,10 @@
   completo (envolviendo texto) en vez de cortarse.
 */
 @media print {
-  [style*='min-width'] {
+  /* Menos las tarjetas de "Relacionar" (button[data-lado]): su min-width
+     las iguala al ancho de la más ancha de la columna; sin él, cada una se
+     encoge a su texto y las columnas quedan disparejas. */
+  [style*='min-width']:not([data-lado]) {
     min-width: 0 !important;
   }
   .overflow-x-auto {
@@ -430,8 +466,25 @@
   h3,
   h4,
   img,
-  textarea {
+  textarea,
+  .bookText {
+    /* .bookText: un campo de renglones partido entre dos hojas se ve como
+       dos cajas sueltas; es de una sola pieza, pasa entero a la siguiente. */
     break-inside: avoid;
+  }
+
+  /* Renglón único (ln1): el fondo rayado (gradiente repetido de 32px) mide lo
+     mismo que la caja y Chrome lo imprime como una barra gris gruesa, corrida
+     arriba o abajo, o no lo imprime. Al imprimir se dibuja con un borde. */
+  .bookText textarea[data-lineas-minimas='1'] {
+    background-image: none !important;
+    border-bottom: 1px solid rgb(203 213 225) !important;
+  }
+  /* Varios renglones: con la caja en una posición fraccionaria, el renglón
+     del borde inferior de cada franja se asomaba arriba de la caja. Con 1px
+     libre debajo de cada renglón lo que se asoma es transparente. */
+  .bookText textarea:not([data-lineas-minimas='1']) {
+    background-image: repeating-linear-gradient(transparent 0 30px, rgb(203 213 225) 30px 31px, transparent 31px 32px) !important;
   }
 }
 

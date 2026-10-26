@@ -6,7 +6,14 @@
   "scripts": {
     "dev": "vite",
     "build": "node scripts/build.mjs && node scripts/flatten-dist.mjs",
+    "build:uni1": "node scripts/build.mjs 1 && node scripts/flatten-dist.mjs",
+    "build:uni2": "node scripts/build.mjs 2 && node scripts/flatten-dist.mjs",
+    "build:uni3": "node scripts/build.mjs 3 && node scripts/flatten-dist.mjs",
+    "build:uni4": "node scripts/build.mjs 4 && node scripts/flatten-dist.mjs",
+    "build:uni5": "node scripts/build.mjs 5 && node scripts/flatten-dist.mjs",
+    "build:uni6": "node scripts/build.mjs 6 && node scripts/flatten-dist.mjs",
     "typecheck": "tsc --noEmit",
+    "registro": "node scripts/registro.mjs",
     "preview": "vite preview"
   },
   "devDependencies": {
